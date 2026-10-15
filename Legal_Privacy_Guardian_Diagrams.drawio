@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-10-06T17:00:00.000Z" agent="ChatGPT" version="24.7.17">
+<diagram id="1_-_Use_Case" name="1 - Use Case">
+<mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+<root>
+<mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="uc_title" value="Legal Privacy Guardian — Use Case Diagram" style="text;html=1;fontSize=20;fontStyle=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="250" y="20" width="700" height="50" as="geometry"/></mxCell>
+<mxCell id="uc_sys" value="Legal Privacy Guardian" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;strokeWidth=2;verticalAlign=top;align=center;fontStyle=1" vertex="1" parent="1"><mxGeometry x="250" y="100" width="700" height="570" as="geometry"/></mxCell>
+<mxCell id="actor_law" value="Avocat / Juriste" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1" vertex="1" parent="1"><mxGeometry x="40" y="250" width="70" height="100" as="geometry"/></mxCell>
+<mxCell id="actor_admin" value="Administrateur" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1" vertex="1" parent="1"><mxGeometry x="1040" y="220" width="70" height="100" as="geometry"/></mxCell>
+<mxCell id="actor_ai" value="Service IA / LLM" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1" vertex="1" parent="1"><mxGeometry x="1040" y="480" width="70" height="100" as="geometry"/></mxCell>
+<mxCell id="u1" value="Importer un document" style="ellipse;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="320" y="150" width="220" height="60" as="geometry"/></mxCell>
+<mxCell id="u2" value="Analyser le document" style="ellipse;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="540" y="150" width="220" height="60" as="geometry"/></mxCell>
+<mxCell id="u3" value="Détecter les données sensibles" style="ellipse;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="320" y="260" width="220" height="60" as="geometry"/></mxCell>
+<mxCell id="u4" value="Anonymiser / Masquer les données" style="ellipse;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="540" y="260" width="220" height="60" as="geometry"/></mxCell>
+<mxCell id="u5" value="Valider la protection" style="ellipse;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="320" y="370" width="220" height="60" as="geometry"/></mxCell>
+<mxCell id="u6" value="Envoyer le document sécurisé à l’IA" style="ellipse;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="540" y="370" width="220" height="60" as="geometry"/></mxCell>
+<mxCell id="u7" value="Consulter le rapport de protection" style="ellipse;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="320" y="480" width="220" height="60" as="geometry"/></mxCell>
+<mxCell id="u8" value="Gérer les règles de confidentialité" style="ellipse;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="540" y="480" width="220" height="60" as="geometry"/></mxCell>
+<mxCell id="u9" value="Journaliser l’opération" style="ellipse;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="430" y="580" width="220" height="60" as="geometry"/></mxCell>
+<mxCell id="e1" edge="1" parent="1" source="actor_law" target="u1" style="endArrow=none;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e2" edge="1" parent="1" source="actor_law" target="u5" style="endArrow=none;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e3" edge="1" parent="1" source="actor_law" target="u7" style="endArrow=none;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e4" edge="1" parent="1" source="actor_admin" target="u8" style="endArrow=none;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e5" edge="1" parent="1" source="actor_ai" target="u6" style="endArrow=none;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e6" edge="1" parent="1" source="actor_admin" target="u9" style="endArrow=none;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="inc1" edge="1" parent="1" source="u2" target="u3" style="dashed=1;endArrow=open;html=1;fontSize=11"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="inc2" edge="1" parent="1" source="u2" target="u4" style="dashed=1;endArrow=open;html=1;fontSize=11"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="inc3" edge="1" parent="1" source="u6" target="u9" style="dashed=1;endArrow=open;html=1;fontSize=11"><mxGeometry relative="1" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram><diagram id="2_-_Sequence" name="2 - Sequence">
+<mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+<root>
+<mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="sq_title" value="Legal Privacy Guardian — Sequence Diagram" style="text;html=1;fontSize=20;fontStyle=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="280" y="20" width="650" height="50" as="geometry"/></mxCell>
+<mxCell id="p1" value="Avocat / Juriste" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="80" y="90" width="150" height="50" as="geometry"/></mxCell>
+<mxCell id="p1l" value="" style="shape=line;dashed=1;html=1;strokeWidth=1" vertex="1" parent="1"><mxGeometry x="155" y="140" width="1" height="500" as="geometry"/></mxCell>
+<mxCell id="p2" value="Interface Web" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="270" y="90" width="150" height="50" as="geometry"/></mxCell>
+<mxCell id="p2l" value="" style="shape=line;dashed=1;html=1;strokeWidth=1" vertex="1" parent="1"><mxGeometry x="345" y="140" width="1" height="500" as="geometry"/></mxCell>
+<mxCell id="p3" value="Privacy Guardian" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="480" y="90" width="150" height="50" as="geometry"/></mxCell>
+<mxCell id="p3l" value="" style="shape=line;dashed=1;html=1;strokeWidth=1" vertex="1" parent="1"><mxGeometry x="555" y="140" width="1" height="500" as="geometry"/></mxCell>
+<mxCell id="p4" value="Moteur de détection" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="700" y="90" width="150" height="50" as="geometry"/></mxCell>
+<mxCell id="p4l" value="" style="shape=line;dashed=1;html=1;strokeWidth=1" vertex="1" parent="1"><mxGeometry x="775" y="140" width="1" height="500" as="geometry"/></mxCell>
+<mxCell id="p5" value="Service IA / LLM" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="920" y="90" width="150" height="50" as="geometry"/></mxCell>
+<mxCell id="p5l" value="" style="shape=line;dashed=1;html=1;strokeWidth=1" vertex="1" parent="1"><mxGeometry x="995" y="140" width="1" height="500" as="geometry"/></mxCell>
+<mxCell id="m1" edge="1" parent="1" source="p1l" target="p2l" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m2" edge="1" parent="1" source="p2l" target="p3l" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m3" edge="1" parent="1" source="p3l" target="p4l" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m4" edge="1" parent="1" source="p4l" target="p3l" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m5" edge="1" parent="1" source="p3l" target="p3l" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m6" edge="1" parent="1" source="p3l" target="p2l" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m7" edge="1" parent="1" source="p2l" target="p5l" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m8" edge="1" parent="1" source="p5l" target="p2l" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m9" edge="1" parent="1" source="p2l" target="p1l" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram><diagram id="3_-_Activity" name="3 - Activity">
+<mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+<root>
+<mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="ac_title" value="Legal Privacy Guardian — Activity Diagram" style="text;html=1;fontSize=20;fontStyle=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="300" y="20" width="600" height="50" as="geometry"/></mxCell>
+<mxCell id="start" value="" style="ellipse;html=1;fillColor=#000000;strokeColor=#000000" vertex="1" parent="1"><mxGeometry x="520" y="90" width="30" height="30" as="geometry"/></mxCell>
+<mxCell id="a1" value="Importer le document" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="450" y="150" width="240" height="60" as="geometry"/></mxCell>
+<mxCell id="a2" value="Analyser le document" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="450" y="230" width="240" height="60" as="geometry"/></mxCell>
+<mxCell id="a3" value="Détecter les données sensibles" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="450" y="310" width="240" height="60" as="geometry"/></mxCell>
+<mxCell id="dec" value="Données sensibles détectées ?" style="rhombus;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="445" y="390" width="240" height="60" as="geometry"/></mxCell>
+<mxCell id="a4" value="Protéger / anonymiser les données" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="450" y="490" width="240" height="60" as="geometry"/></mxCell>
+<mxCell id="a5" value="Valider le document sécurisé" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="450" y="570" width="240" height="60" as="geometry"/></mxCell>
+<mxCell id="a6" value="Envoyer à l’IA" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="450" y="650" width="240" height="60" as="geometry"/></mxCell>
+<mxCell id="a7" value="Afficher le résultat + rapport" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="450" y="730" width="240" height="60" as="geometry"/></mxCell>
+<mxCell id="end" value="" style="ellipse;html=1;shape=doubleEllipse;fillColor=#000000;strokeColor=#000000" vertex="1" parent="1"><mxGeometry x="555" y="820" width="30" height="30" as="geometry"/></mxCell>
+<mxCell id="ae1" edge="1" parent="1" source="start" target="a1" style="endArrow=block;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ae2" edge="1" parent="1" source="a1" target="a2" style="endArrow=block;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ae3" edge="1" parent="1" source="a2" target="a3" style="endArrow=block;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ae4" edge="1" parent="1" source="a3" target="dec" style="endArrow=block;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ae5" edge="1" parent="1" source="dec" target="a4" style="endArrow=block;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ae6" edge="1" parent="1" source="a4" target="a5" style="endArrow=block;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ae7" edge="1" parent="1" source="a5" target="a6" style="endArrow=block;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ae8" edge="1" parent="1" source="a6" target="a7" style="endArrow=block;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ae9" edge="1" parent="1" source="a7" target="end" style="endArrow=block;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="no" value="Non : aucune donnée sensible" style="text;html=1;fontSize=11" vertex="1" parent="1"><mxGeometry x="700" y="420" width="190" height="30" as="geometry"/></mxCell>
+<mxCell id="yes" value="Oui" style="text;html=1;fontSize=11" vertex="1" parent="1"><mxGeometry x="550" y="455" width="50" height="25" as="geometry"/></mxCell>
+<mxCell id="noedge" edge="1" parent="1" source="dec" target="a5" style="endArrow=block;html=1;"><mxGeometry relative="1" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram><diagram id="4_-_State" name="4 - State">
+<mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+<root>
+<mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="st_title" value="Legal Privacy Guardian — State Diagram" style="text;html=1;fontSize=20;fontStyle=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="300" y="20" width="600" height="50" as="geometry"/></mxCell>
+<mxCell id="s0" value="Nouveau document" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="120" y="150" width="190" height="60" as="geometry"/></mxCell>
+<mxCell id="s1" value="En cours d’analyse" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="360" y="150" width="190" height="60" as="geometry"/></mxCell>
+<mxCell id="s2" value="Données sensibles détectées" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="600" y="150" width="190" height="60" as="geometry"/></mxCell>
+<mxCell id="s3" value="Protection en cours" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="600" y="300" width="190" height="60" as="geometry"/></mxCell>
+<mxCell id="s4" value="Document sécurisé" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="360" y="450" width="190" height="60" as="geometry"/></mxCell>
+<mxCell id="s5" value="Envoyé à l’IA" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="120" y="450" width="190" height="60" as="geometry"/></mxCell>
+<mxCell id="s6" value="Résultat reçu" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="120" y="600" width="190" height="60" as="geometry"/></mxCell>
+<mxCell id="s7" value="Erreur / Rejet" style="rounded=1;whiteSpace=wrap;html=1" vertex="1" parent="1"><mxGeometry x="840" y="300" width="190" height="60" as="geometry"/></mxCell>
+<mxCell id="ss" value="" style="ellipse;html=1;fillColor=#000000;strokeColor=#000000" vertex="1" parent="1"><mxGeometry x="40" y="165" width="25" height="25" as="geometry"/></mxCell>
+<mxCell id="t0" edge="1" parent="1" source="ss" target="s0" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="t1" edge="1" parent="1" source="s0" target="s1" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="t2" edge="1" parent="1" source="s1" target="s2" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="t3" edge="1" parent="1" source="s2" target="s3" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="t4" edge="1" parent="1" source="s3" target="s4" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="t5" edge="1" parent="1" source="s4" target="s5" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="t6" edge="1" parent="1" source="s5" target="s6" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="t7" edge="1" parent="1" source="s1" target="s7" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="t8" edge="1" parent="1" source="s5" target="s7" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="t9" edge="1" parent="1" source="s7" target="s1" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram><diagram id="5_-_Entity_Relationship" name="5 - Entity Relationship">
+<mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+<root>
+<mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="er_title" value="Legal Privacy Guardian — Entity-Relationship Diagram" style="text;html=1;fontSize=20;fontStyle=1;align=center;verticalAlign=middle" vertex="1" parent="1"><mxGeometry x="280" y="20" width="650" height="50" as="geometry"/></mxCell>
+<mxCell id="e_user" value="&lt;b&gt;USER&lt;/b&gt;&lt;br&gt;Nom&lt;br&gt;PK user_id&lt;br&gt;email&lt;br&gt;role" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingTop=8" vertex="1" parent="1"><mxGeometry x="80" y="150" width="220" height="130" as="geometry"/></mxCell>
+<mxCell id="e_doc" value="&lt;b&gt;DOCUMENT&lt;/b&gt;&lt;br&gt;PK document_id&lt;br&gt;filename&lt;br&gt;created_at&lt;br&gt;status&lt;br&gt;FK user_id" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingTop=8" vertex="1" parent="1"><mxGeometry x="360" y="150" width="220" height="130" as="geometry"/></mxCell>
+<mxCell id="e_scan" value="&lt;b&gt;SCAN&lt;/b&gt;&lt;br&gt;PK scan_id&lt;br&gt;scan_date&lt;br&gt;risk_level&lt;br&gt;FK document_id" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingTop=8" vertex="1" parent="1"><mxGeometry x="650" y="150" width="220" height="130" as="geometry"/></mxCell>
+<mxCell id="e_data" value="&lt;b&gt;SENSITIVE_DATA&lt;/b&gt;&lt;br&gt;PK data_id&lt;br&gt;type&lt;br&gt;value_hash&lt;br&gt;location&lt;br&gt;FK scan_id" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingTop=8" vertex="1" parent="1"><mxGeometry x="900" y="150" width="220" height="130" as="geometry"/></mxCell>
+<mxCell id="e_action" value="&lt;b&gt;PROTECTION_ACTION&lt;/b&gt;&lt;br&gt;PK action_id&lt;br&gt;action_type&lt;br&gt;created_at&lt;br&gt;FK document_id" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingTop=8" vertex="1" parent="1"><mxGeometry x="360" y="420" width="220" height="130" as="geometry"/></mxCell>
+<mxCell id="e_rule" value="&lt;b&gt;PRIVACY_RULE&lt;/b&gt;&lt;br&gt;PK rule_id&lt;br&gt;name&lt;br&gt;category&lt;br&gt;active" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingTop=8" vertex="1" parent="1"><mxGeometry x="650" y="420" width="220" height="130" as="geometry"/></mxCell>
+<mxCell id="e_log" value="&lt;b&gt;AUDIT_LOG&lt;/b&gt;&lt;br&gt;PK log_id&lt;br&gt;action&lt;br&gt;timestamp&lt;br&gt;FK user_id&lt;br&gt;FK document_id" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingTop=8" vertex="1" parent="1"><mxGeometry x="900" y="420" width="220" height="130" as="geometry"/></mxCell>
+<mxCell id="r1" edge="1" parent="1" source="e_user" target="e_doc" style="endArrow=ERone;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="r2" edge="1" parent="1" source="e_doc" target="e_scan" style="endArrow=ERone;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="r3" edge="1" parent="1" source="e_scan" target="e_data" style="endArrow=ERone;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="r4" edge="1" parent="1" source="e_doc" target="e_action" style="endArrow=ERone;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="r5" edge="1" parent="1" source="e_action" target="e_rule" style="endArrow=ERone;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="r6" edge="1" parent="1" source="e_user" target="e_log" style="endArrow=ERone;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="r7" edge="1" parent="1" source="e_doc" target="e_log" style="endArrow=ERone;html=1;edgeStyle=orthogonalEdgeStyle"><mxGeometry relative="1" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram>
+</mxfile>
