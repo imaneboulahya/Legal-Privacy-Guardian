@@ -1,6 +1,11 @@
 import unittest
+from unittest.mock import patch
 
-from privacy import mask_sensitive_data
+from privacy import (
+    PrivacyProtectionError,
+    mask_sensitive_data,
+    pseudonymize_sensitive_data,
+)
 
 
 class SensitiveDetectionTests(unittest.TestCase):
@@ -75,6 +80,44 @@ class SensitiveDetectionTests(unittest.TestCase):
         self.assertNotIn("FR1420041010050500013M02606", masked)
         self.assertNotIn("ghp_abcdefghijklmnopqrstuvwxyz123456", masked)
         self.assertNotIn("C:\\Users\\Jean", masked)
+
+    def test_pseudonymizes_french_english_and_arabic_labeled_values_stably(self):
+        text = (
+            "Nom complet : Jean Dupont\n"
+            "Client name: Jean Dupont\n"
+            "Email: private@example.com\n"
+            "رقم الهاتف: ٠٦١٢٣٤٥٦٧٨\n"
+            "رقم القضية: CAS-12345\n"
+            "Adresse personnelle: 12 rue des Lilas, Paris\n"
+            "Case reference: REF-2025-17\n"
+            "Informations confidentielles: stratégie du cabinet"
+        )
+
+        findings, protected, mapping = pseudonymize_sensitive_data(text)
+
+        self.assertIn("Nom complet : [PERSON_001]", protected)
+        self.assertIn("Client name: [PERSON_001]", protected)
+        self.assertIn("[EMAIL_001]", protected)
+        self.assertIn("رقم الهاتف: [PHONE_001]", protected)
+        self.assertIn("رقم القضية: [CASE_001]", protected)
+        self.assertIn("Adresse personnelle: [ADDRESS_001]", protected)
+        self.assertIn("Case reference: [CASE_002]", protected)
+        self.assertIn("Informations confidentielles: [SENSITIVE_001]", protected)
+        self.assertNotIn("Jean Dupont", protected)
+        self.assertNotIn("private@example.com", protected)
+        self.assertNotIn("٠٦١٢٣٤٥٦٧٨", protected)
+        self.assertNotIn("12 rue des Lilas", protected)
+        self.assertEqual(mapping["[PERSON_001]"], "Jean Dupont")
+        self.assertEqual(mapping["[EMAIL_001]"], "private@example.com")
+        self.assertGreaterEqual(findings["nom et prénom"], 2)
+
+    def test_pseudonymization_failure_is_explicit_and_does_not_return_unprotected_text(self):
+        with patch(
+            "privacy.transform_sensitive_data",
+            side_effect=ValueError("detection failed"),
+        ):
+            with self.assertRaises(PrivacyProtectionError):
+                pseudonymize_sensitive_data("private@example.com")
 
 
 if __name__ == "__main__":

@@ -51,6 +51,7 @@ function countFindings(findings = {}) {
 function App() {
   const [scans, setScans] = useState([]);
   const [countries, setCountries] = useState({});
+  const [ollamaHealth, setOllamaHealth] = useState(null);
   const [countryCode, setCountryCode] = useState(() => localStorage.getItem("guardian-country") || "");
   const [onboardingCountry, setOnboardingCountry] = useState(() => localStorage.getItem("guardian-country") || "");
   const [activePage, setActivePage] = useState("assistant");
@@ -83,6 +84,10 @@ function App() {
       .then((response) => response.json())
       .then((payload) => setCountries(payload.countries || {}))
       .catch(() => setChatNotice("Impossible de charger la liste des pays."));
+    fetch("/api/health")
+      .then((response) => response.json())
+      .then((payload) => setOllamaHealth(payload.ollama || null))
+      .catch(() => setOllamaHealth({ available: false, model_available: false }));
     const updatePage = () => setActivePage("assistant");
     window.addEventListener("hashchange", updatePage);
     return () => window.removeEventListener("hashchange", updatePage);
@@ -325,7 +330,7 @@ function App() {
       <main className="main-panel" id={activePage}>
         <header className="topbar">
           <div className="breadcrumb"><span>{countries[countryCode]?.name || "Espace"}</span><span className="crumb-separator">/</span><strong>{activePage === "assistant" ? "Assistant juridique" : activePage === "documents" ? "Analyse de document" : "Vue d’ensemble"}</strong></div>
-          <div className="topbar-right"><span className="secure-label"><LockKeyhole size={14} />IA via fournisseur configuré</span><span className="avatar" title="Application locale"><Activity size={14} /></span></div>
+          <div className="topbar-right"><span className="secure-label" title={ollamaHealth?.error || ""}><LockKeyhole size={14} />{ollamaHealth === null ? "Vérification Ollama…" : ollamaHealth.available && ollamaHealth.model_available ? "Ollama prêt · IA locale" : "Ollama indisponible"}</span><span className="avatar" title="Application locale"><Activity size={14} /></span></div>
         </header>
 
         <div className="page-content">
@@ -483,19 +488,19 @@ function App() {
               <div className="assistant-chat-heading"><span className="chat-icon"><Scale size={18} /></span><div><strong>Assistant juridique</strong><small>{countries[countryCode]?.name || ""} · Sources officielles de référence</small></div><span className="chat-country">{countryCode}</span></div>
               <div className="chat-messages" aria-live="polite">
                 {!chatMessages.length && <div className="chat-empty"><MessageCircle size={24} /><strong>Que souhaitez-vous comprendre&nbsp;?</strong><span>Posez une question sur les lois et démarches de votre pays.</span></div>}
-                {chatMessages.map((message, index) => <article className={`chat-message ${message.role}`} key={`${index}-${message.role}`}><span className="chat-message-label">{message.role === "user" ? "VOUS" : "ASSISTANT"}</span><p>{message.content}</p>{message.document && <div className="chat-document-result"><span>{message.document.filename} · {countFindings(message.document.findings)} élément(s) masqué(s)</span><button className="download-button" type="button" onClick={() => downloadAssistantDocument(message.document)}><Download size={14} />Télécharger le document masqué (.txt)</button></div>}</article>)}
+                {chatMessages.map((message, index) => <article className={`chat-message ${message.role}`} key={`${index}-${message.role}`}><span className="chat-message-label">{message.role === "user" ? "VOUS" : "ASSISTANT"}</span><p>{message.content}</p>{message.document && <div className="chat-document-result"><span>{message.document.filename} · {countFindings(message.document.findings)} élément(s) pseudonymisé(s)</span><small>Catégories repérées : {Object.entries(message.document.findings || {}).map(([category, count]) => `${category} (${count})`).join(", ") || "aucune par les règles prises en charge"}</small><button className="download-button" type="button" onClick={() => downloadAssistantDocument(message.document)}><Download size={14} />Télécharger le texte protégé (.txt)</button></div>}</article>)}
                 {chatBusy && <div className="chat-loading"><LoaderCircle className="spin" size={16} />Préparation de la réponse…</div>}
               </div>
               {chatNotice && <div className="notice error" role="alert"><span><AlertTriangle size={16} /></span>{chatNotice}</div>}
-              {availableRedactedDocument && <div className="redacted-available"><span>Le texte a été masqué localement.</span><button className="download-button" type="button" onClick={() => downloadAssistantDocument(availableRedactedDocument)}><Download size={14} />Télécharger le document masqué (.txt)</button></div>}
+              {availableRedactedDocument && <div className="redacted-available"><span>Le texte a été pseudonymisé localement. Ce traitement ne garantit pas l’anonymisation complète.</span><button className="download-button" type="button" onClick={() => downloadAssistantDocument(availableRedactedDocument)}><Download size={14} />Télécharger le texte protégé (.txt)</button></div>}
               <form className="chat-compose" onSubmit={submitQuestion}>
                 <input ref={chatDocumentRef} className="visually-hidden" type="file" accept={SUPPORTED_EXTENSIONS.join(",")} aria-label="Choisir un document à joindre" onChange={(event) => chooseChatDocument(event.target.files[0])} />
                 {chatFile && <div className="chat-attachment"><FileText size={15} /><span>{chatFile.name}</span><button className="remove-file" type="button" onClick={() => { setChatFile(null); if (chatDocumentRef.current) chatDocumentRef.current.value = ""; }} aria-label="Retirer le document joint"><X size={15} /></button></div>}
                 <textarea value={chatInput} onChange={(event) => setChatInput(event.target.value)} maxLength={4000} rows={3} placeholder="Écrivez votre question…" aria-label="Votre question juridique" />
-                <div className="chat-compose-footer"><span>{chatInput.length}/4 000 · Document extrait et masqué localement</span><div className="chat-compose-actions"><button className="attach-button" type="button" onClick={() => chatDocumentRef.current?.click()} disabled={chatBusy}><Paperclip size={16} /><span>Joindre</span></button><button className="analyze-button" type="submit" disabled={!chatInput.trim() || chatBusy} aria-label="Envoyer la question">{chatBusy ? <LoaderCircle className="spin" size={17} /> : <Send size={16} />} Envoyer</button></div></div>
+                <div className="chat-compose-footer"><span>{chatInput.length}/4 000 · Document pseudonymisé localement avant analyse</span><div className="chat-compose-actions"><button className="attach-button" type="button" onClick={() => chatDocumentRef.current?.click()} disabled={chatBusy}><Paperclip size={16} /><span>Joindre</span></button><button className="analyze-button" type="submit" disabled={!chatInput.trim() || chatBusy} aria-label="Envoyer la question">{chatBusy ? <LoaderCircle className="spin" size={17} /> : <Send size={16} />} Envoyer</button></div></div>
               </form>
             </div>
-            <aside className="assistant-disclosure"><p className="panel-kicker">PÉRIMÈTRE JURIDIQUE</p><h2>Droit de {countries[countryCode]?.name || ""}</h2><p>Les réponses sont produites par un modèle IA configuré par l’administrateur. Elles peuvent être inexactes ou incomplètes et ne remplacent pas un avis juridique.</p><div className="coverage-rule" /><strong>Portails officiels</strong>{(countries[countryCode]?.sources || []).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.name}<ArrowUpRight size={13} /></a>)}<p className="coverage-note"><AlertTriangle size={15} /><span>Le contenu des lois n’est pas récupéré en direct. Vérifiez les textes et leur version en vigueur sur les portails officiels.</span></p><p className="provider-warning"><LockKeyhole size={14} />Votre question, l’historique récent et le texte masqué du document sont transmis au fournisseur IA.</p></aside>
+            <aside className="assistant-disclosure"><p className="panel-kicker">PÉRIMÈTRE JURIDIQUE</p><h2>Droit de {countries[countryCode]?.name || ""}</h2><p>Les réponses sont produites localement par Ollama. Elles peuvent être inexactes ou incomplètes et ne remplacent pas un avis juridique.</p><div className="coverage-rule" /><strong>Portails officiels</strong>{(countries[countryCode]?.sources || []).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.name}<ArrowUpRight size={13} /></a>)}<p className="coverage-note"><AlertTriangle size={15} /><span>Le contenu des lois n’est pas récupéré en direct. Vérifiez les textes et leur version en vigueur sur les portails officiels.</span></p><p className="provider-warning"><LockKeyhole size={14} />Votre question et l’historique sont envoyés au modèle Ollama local. Seul le texte pseudonymisé du document lui est transmis.</p></aside>
           </section>}
 
           <footer className="page-footer"><span>LEGAL PRIVACY GUARDIAN</span><span>Prototype de démonstration <span className="footer-separator">·</span> Détection limitée</span></footer>

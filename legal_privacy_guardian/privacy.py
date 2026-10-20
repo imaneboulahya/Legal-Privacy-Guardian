@@ -82,6 +82,45 @@ CONTEXT_PATTERNS = {
 }
 SENSITIVE_CATEGORIES = tuple(dict.fromkeys((*CONTEXT_PATTERNS, *DIRECT_PATTERNS)))
 
+ARABIC_CONTEXT_RULES = {
+    "nom et prénom": r"client name|client contact|party name|name of client|الاسم الكامل|الاسم و(?:اللقب|النسب)|اسم العميل|اسم الموكل|اسم الطرف",
+    "date de naissance": r"تاريخ الميلاد|ولد(?:ت)? في",
+    "adresse personnelle": r"address|adresse(?: postale)?|mailing address|العنوان|عنوان السكن|عنوان الإقامة",
+    "numéros de téléphone français": r"رقم الهاتف|رقم الجوال|الهاتف الشخصي",
+    "adresses e-mail": r"البريد الإلكتروني|عنوان البريد الإلكتروني",
+    "CIN / carte d’identité": r"national identification number|national ID|identity number|رقم الهوية|رقم البطاقة الوطنية|رقم بطاقة التعريف",
+    "numéro de passeport": r"رقم جواز السفر",
+    "numéro de dossier personnel": r"case reference|case number|docket number|claim number|file reference|référence de dossier|numéro d’affaire|رقم الملف|رقم القضية|رقم الدعوى|مرجع القضية",
+    "numéro de compte bancaire": r"رقم الحساب البنكي|رقم الحساب المصرفي",
+    "RIB": r"رقم الحساب المصرفي الدولي|بيانات الحساب البنكي",
+    "données confidentielles des clients": r"client details|client information|client data|بيانات العميل|معلومات العميل|بيانات الموكل|معلومات الموكل",
+    "nom de l’auteur": r"اسم المؤلف|اسم محرر المستند",
+}
+CONTEXT_PATTERNS.update(
+    {
+        category: re.compile(
+            rf"(?im)^[^\r\n]*\b(?:{CONTEXT_RULES[category]}|{aliases})\b[^\r\n]*$"
+        )
+        for category, aliases in ARABIC_CONTEXT_RULES.items()
+    }
+)
+DIRECT_PATTERNS["numéros de téléphone français"] = re.compile(
+    r"(?<!\w)(?:\+|00)?[\d٠-٩۰-۹][\d٠-٩۰-۹\s().-]{6,18}[\d٠-٩۰-۹](?!\w)"
+)
+CONFIDENTIAL_CONTEXT_RULES = {
+    "informations confidentielles": (
+        r"informations confidentielles|données confidentielles|confidential information|"
+        r"privileged information|معلومات سرية|بيانات سرية"
+    )
+}
+CONTEXT_PATTERNS.update(
+    {
+        category: re.compile(rf"(?im)^[^\r\n]*\b(?:{aliases})\b[^\r\n]*$")
+        for category, aliases in CONFIDENTIAL_CONTEXT_RULES.items()
+    }
+)
+SENSITIVE_CATEGORIES = tuple(dict.fromkeys((*SENSITIVE_CATEGORIES, *CONFIDENTIAL_CONTEXT_RULES)))
+
 
 def _passes_luhn(value: str) -> bool:
     digits = [int(character) for character in value if character.isdigit()]
@@ -136,3 +175,100 @@ def mask_sensitive_data(text: str) -> tuple[dict[str, int], str]:
         text,
         lambda category, _value: f"[{category.upper()} MASQUÉ]",
     )
+
+
+class PrivacyProtectionError(ValueError):
+    pass
+
+
+def _placeholder_type(category: str) -> str:
+    normalized = category.casefold()
+    if "e-mail" in normalized or "email" in normalized:
+        return "EMAIL"
+    if "téléphone" in normalized or "phone" in normalized:
+        return "PHONE"
+    if "adresse" in normalized or "address" in normalized:
+        return "ADDRESS"
+    if "client" in normalized:
+        return "CLIENT"
+    if "dossier" in normalized or "case" in normalized or "casi" in normalized:
+        return "CASE"
+    if "nom" in normalized or "auteur" in normalized or "name" in normalized or "party" in normalized:
+        return "PERSON"
+    if any(term in normalized for term in ("iban", "rib", "banc", "carte bancaire", "salaire", "patrimoine")):
+        return "FINANCIAL"
+    if any(term in normalized for term in ("passeport", "identité", "cin", "sécurité sociale", "permis")):
+        return "ID"
+    if "gps" in normalized or "localisation" in normalized:
+        return "LOCATION"
+    return "SENSITIVE"
+
+
+def pseudonymize_sensitive_data(
+    text: str,
+) -> tuple[dict[str, int], str, dict[str, str]]:
+    """Replace detected values with stable request-scoped tokens; mapping stays local."""
+    if not isinstance(text, str):
+        raise PrivacyProtectionError("Le texte à protéger est invalide.")
+
+    mapping: dict[str, str] = {}
+    token_by_value: dict[tuple[str, str], str] = {}
+    counters: dict[str, int] = {}
+
+    def pseudonymize(category: str, matched_value: str) -> str:
+        prefix = ""
+        original_value = matched_value
+        if category in CONTEXT_PATTERNS:
+            separator = re.search(r"[:：]\s*", matched_value)
+            if separator:
+                prefix = matched_value[:separator.end()]
+                original_value = matched_value[separator.end():]
+
+        token_type = _placeholder_type(category)
+        key = (token_type, original_value.casefold())
+        placeholder = token_by_value.get(key)
+        if placeholder is None:
+            counters[token_type] = counters.get(token_type, 0) + 1
+            placeholder = f"[{token_type}_{counters[token_type]:03d}]"
+            token_by_value[key] = placeholder
+            mapping[placeholder] = original_value
+        return f"{prefix}{placeholder}"
+
+    try:
+        findings, protected_text = transform_sensitive_data(text, pseudonymize)
+    except (TypeError, ValueError, re.error) as error:
+        raise PrivacyProtectionError(
+            "La protection des données sensibles a échoué."
+        ) from error
+
+    if (
+        not isinstance(findings, dict)
+        or any(not isinstance(count, int) or count < 0 for count in findings.values())
+        or not isinstance(protected_text, str)
+        or any(placeholder not in protected_text for placeholder in mapping)
+    ):
+        raise PrivacyProtectionError("La protection des données sensibles est incomplète.")
+    return findings, protected_text, mapping
+
+
+def replace_mapped_values(text: str, mapping: dict[str, str]) -> str:
+    """Prevent values found in a document from re-entering the model via chat history."""
+    if not isinstance(text, str) or not isinstance(mapping, dict):
+        raise PrivacyProtectionError("Le texte ou la correspondance de protection est invalide.")
+    protected_text = text
+    try:
+        for placeholder, original_value in sorted(
+            mapping.items(), key=lambda item: len(item[1]), reverse=True
+        ):
+            if not isinstance(placeholder, str) or not isinstance(original_value, str):
+                raise PrivacyProtectionError("La correspondance de protection est invalide.")
+            if original_value:
+                protected_text = re.sub(
+                    re.escape(original_value),
+                    lambda _match, replacement=placeholder: replacement,
+                    protected_text,
+                    flags=re.IGNORECASE,
+                )
+    except re.error as error:
+        raise PrivacyProtectionError("La correspondance de protection est invalide.") from error
+    return protected_text

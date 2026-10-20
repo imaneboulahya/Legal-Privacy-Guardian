@@ -4,7 +4,14 @@ from pathlib import Path
 from flask import Flask, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 
-from llm_assistant import COUNTRY_LAW_SOURCES, AssistantConfigurationError, AssistantProviderError, answer_legal_question
+from llm_assistant import (
+    COUNTRY_LAW_SOURCES,
+    AssistantConfigurationError,
+    AssistantProviderError,
+    AssistantUnavailableError,
+    answer_legal_question,
+)
+from local_ai import check_ollama_health
 from database import (
     delete_all_scans,
     delete_scan,
@@ -14,7 +21,12 @@ from database import (
     save_scan,
 )
 from document_parser import DocumentExtractionError, SUPPORTED_EXTENSIONS, extract_document_text
-from privacy import mask_sensitive_data
+from privacy import (
+    PrivacyProtectionError,
+    mask_sensitive_data,
+    pseudonymize_sensitive_data,
+    replace_mapped_values,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -50,7 +62,7 @@ def frontend_asset(asset_path: str):
 
 @app.get("/api/health")
 def health():
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "ok", "ollama": check_ollama_health()})
 
 
 @app.get("/api/countries")
@@ -70,7 +82,9 @@ def legal_chat():
             return jsonify({"error": "L’historique de conversation est invalide."}), 400
         uploaded_file = request.files.get("document")
     else:
-        payload = request.get_json(silent=True) or {}
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return jsonify({"error": "Le corps de la requête doit être un objet JSON valide."}), 400
         country_code = payload.get("country")
         message = payload.get("message")
         history = payload.get("history", [])
@@ -93,6 +107,7 @@ def legal_chat():
             messages.append({"role": item["role"], "content": item["content"]})
     document_text = None
     document_result = None
+    document_mapping = {}
     if uploaded_file is not None and uploaded_file.filename:
         filename = secure_filename(uploaded_file.filename)
         if not filename:
@@ -101,7 +116,14 @@ def legal_chat():
             extracted_text = extract_document_text(filename, uploaded_file.read())
         except DocumentExtractionError as error:
             return jsonify({"error": str(error)}), 422
-        findings, document_text = mask_sensitive_data(extracted_text)
+        try:
+            findings, document_text, document_mapping = pseudonymize_sensitive_data(
+                extracted_text
+            )
+        except PrivacyProtectionError:
+            return jsonify(
+                {"error": "La protection des données sensibles a échoué. Aucun texte n’a été envoyé à l’IA."}
+            ), 422
         if len(document_text) > MAX_ASSISTANT_DOCUMENT_CHARACTERS:
             return jsonify(
                 {"error": "Le texte masqué dépasse 40 000 caractères. Réduisez le document avant de l’ajouter au chat."}
@@ -111,20 +133,45 @@ def legal_chat():
             "output_filename": f"{Path(filename).stem}-texte-masque.txt",
             "redacted_text": document_text,
             "findings": findings,
+            "protection": {
+                "method": "pseudonymization",
+                "anonymized": False,
+                "mapping_persisted": False,
+            },
         }
 
     try:
+        protected_message = replace_mapped_values(message.strip(), document_mapping)
+        protected_history = [
+            {
+                **item,
+                "content": replace_mapped_values(item["content"], document_mapping),
+            }
+            for item in messages
+        ]
         if document_text is None:
-            answer = answer_legal_question(country_code, messages, message.strip())
+            answer = answer_legal_question(country_code, protected_history, protected_message)
         else:
             answer = answer_legal_question(
-                country_code, messages, message.strip(), document_text=document_text
+                country_code, protected_history, protected_message, document_text=document_text
             )
     except AssistantConfigurationError as error:
         error_response = {"error": str(error)}
         if document_result is not None:
             error_response["document"] = document_result
         return jsonify(error_response), 503
+    except AssistantUnavailableError as error:
+        error_response = {"error": str(error)}
+        if document_result is not None:
+            error_response["document"] = document_result
+        return jsonify(error_response), 503
+    except PrivacyProtectionError:
+        error_response = {
+            "error": "La protection des données sensibles a échoué. Aucun texte n’a été envoyé à l’IA."
+        }
+        if document_result is not None:
+            error_response["document"] = document_result
+        return jsonify(error_response), 422
     except AssistantProviderError as error:
         error_response = {"error": str(error)}
         if document_result is not None:

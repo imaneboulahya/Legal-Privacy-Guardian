@@ -231,6 +231,7 @@ h1, h2, p { margin-top: 0; }
 .chat-message p { margin: 5px 0 0; color: #44564b; font-size: 11px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .chat-document-result { display: grid; justify-items: start; gap: 8px; margin-top: 10px; padding-top: 9px; border-top: 1px solid #e5e9e1; }
 .chat-document-result > span { color: #748278; font-size: 9px; }
+.chat-document-result > small { color: #89948b; font-size: 9px; line-height: 1.5; }
 .chat-loading { display: flex; align-items: center; gap: 7px; color: #76887b; font-size: 10px; }
 .chat-compose { padding: 12px; border-top: 1px solid var(--line); }
 .redacted-available { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 12px 12px; padding: 9px; border: 1px solid #dce5d8; border-radius: 3px; background: #f2f6ef; color: #5b725f; font-size: 9px; }
