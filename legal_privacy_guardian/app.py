@@ -1,17 +1,10 @@
 import json
+import os
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 
-from llm_assistant import (
-    COUNTRY_LAW_SOURCES,
-    AssistantConfigurationError,
-    AssistantProviderError,
-    AssistantUnavailableError,
-    answer_legal_question,
-)
-from local_ai import check_ollama_health
 from database import (
     delete_all_scans,
     delete_scan,
@@ -20,6 +13,14 @@ from database import (
     list_recent_scans,
     save_scan,
 )
+from llm_assistant import (
+    COUNTRY_LAW_SOURCES,
+    AssistantConfigurationError,
+    AssistantProviderError,
+    AssistantUnavailableError,
+    answer_legal_question,
+)
+from gemini_ai import check_gemini_health
 from document_parser import DocumentExtractionError, SUPPORTED_EXTENSIONS, extract_document_text
 from privacy import (
     PrivacyProtectionError,
@@ -37,11 +38,19 @@ app = Flask(
     static_url_path="/assets",
 )
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
-app.config["DATABASE"] = Path(app.instance_path) / "guardian.sqlite3"
+app.config["DATABASE_URL"] = os.environ.get("DATABASE_URL")
 MAX_ASSISTANT_DOCUMENT_CHARACTERS = 40_000
 
 Path(app.instance_path).mkdir(parents=True, exist_ok=True)
-init_db(app.config["DATABASE"])
+
+
+def _database_url() -> str | Path:
+    database_url = app.config.get("DATABASE_URL")
+    if not isinstance(database_url, (str, Path)) or not database_url:
+        raise RuntimeError(
+            "Configurez DATABASE_URL avec l’URL de connexion PostgreSQL locale."
+        )
+    return database_url
 
 
 @app.get("/")
@@ -62,7 +71,7 @@ def frontend_asset(asset_path: str):
 
 @app.get("/api/health")
 def health():
-    return jsonify({"status": "ok", "ollama": check_ollama_health()})
+    return jsonify({"status": "ok", "gemini": check_gemini_health()})
 
 
 @app.get("/api/countries")
@@ -198,7 +207,7 @@ def supported_formats():
 @app.get("/api/scans")
 def get_scans():
     query = request.args.get("q", "").strip().casefold()
-    scans = list_recent_scans(app.config["DATABASE"], limit=100)
+    scans = list_recent_scans(_database_url(), limit=100)
     if query:
         scans = [scan for scan in scans if query in str(scan["filename"]).casefold()]
     return jsonify({"scans": scans})
@@ -206,7 +215,7 @@ def get_scans():
 
 @app.get("/api/scans/<int:scan_id>")
 def get_scan_report(scan_id: int):
-    scan = get_scan(app.config["DATABASE"], scan_id)
+    scan = get_scan(_database_url(), scan_id)
     if scan is None:
         return jsonify({"error": "Rapport introuvable."}), 404
     return jsonify({"scan": scan})
@@ -214,14 +223,14 @@ def get_scan_report(scan_id: int):
 
 @app.delete("/api/scans/<int:scan_id>")
 def remove_scan(scan_id: int):
-    if not delete_scan(app.config["DATABASE"], scan_id):
+    if not delete_scan(_database_url(), scan_id):
         return jsonify({"error": "Rapport introuvable."}), 404
     return jsonify({"deleted": scan_id})
 
 
 @app.delete("/api/scans")
 def clear_scan_history():
-    deleted_count = delete_all_scans(app.config["DATABASE"])
+    deleted_count = delete_all_scans(_database_url())
     return jsonify({"deleted_count": deleted_count})
 
 
@@ -241,7 +250,7 @@ def scan_document():
         return jsonify({"error": str(error)}), 422
 
     findings, redacted_text = mask_sensitive_data(content)
-    scan_id = save_scan(app.config["DATABASE"], filename, findings)
+    scan_id = save_scan(_database_url(), filename, findings)
     count = sum(findings.values())
     if count:
         message = f"Analyse terminée : {count} élément(s) potentiel(s) détecté(s)."
@@ -267,4 +276,6 @@ def file_too_large(_error):
 
 
 if __name__ == "__main__":
+    database_url = _database_url()
+    init_db(database_url)
     app.run(host="127.0.0.1", port=5000, debug=False)

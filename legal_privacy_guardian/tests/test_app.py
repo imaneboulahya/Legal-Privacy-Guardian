@@ -1,17 +1,34 @@
 import io
+import json
 import sqlite3
 import sys
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import patch
+from urllib.error import URLError
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app import app
 from database import init_db
 from llm_assistant import AssistantConfigurationError, AssistantUnavailableError
+from gemini_ai import DEFAULT_GEMINI_MODEL
 from privacy import PrivacyProtectionError
+
+
+class FakeGeminiResponse:
+    def __init__(self, body):
+        self.body = json.dumps(body).encode("utf-8")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def read(self):
+        return self.body
 
 
 class GuardianApiTests(unittest.TestCase):
@@ -19,12 +36,18 @@ class GuardianApiTests(unittest.TestCase):
         self.temporary_directory = tempfile.TemporaryDirectory()
         self.database_path = Path(self.temporary_directory.name) / "test.sqlite3"
         init_db(self.database_path)
-        self.original_database = app.config["DATABASE"]
-        app.config.update(TESTING=True, DATABASE=self.database_path)
+        self.api_environment = patch.dict(
+            "os.environ",
+            {"GEMINI_API_KEY": "test-private-key", "GEMINI_MODEL": DEFAULT_GEMINI_MODEL},
+        )
+        self.api_environment.start()
+        self.original_database = app.config["DATABASE_URL"]
+        app.config.update(TESTING=True, DATABASE_URL=self.database_path)
         self.client = app.test_client()
 
     def tearDown(self):
-        app.config["DATABASE"] = self.original_database
+        app.config["DATABASE_URL"] = self.original_database
+        self.api_environment.stop()
         self.temporary_directory.cleanup()
 
     def upload(self, content=b"test@example.com 0612345678", filename="sample.txt"):
@@ -81,20 +104,48 @@ class GuardianApiTests(unittest.TestCase):
             oversized.close()
         finally:
             app.config["MAX_CONTENT_LENGTH"] = configured_limit
-        with patch("app.check_ollama_health", return_value={
+        with patch("app.check_gemini_health", return_value={
             "available": True,
             "model_available": True,
-            "model": "qwen3:1.7b",
+            "model": DEFAULT_GEMINI_MODEL,
             "error": None,
         }):
             health = self.client.get("/api/health").get_json()
         self.assertEqual(health["status"], "ok")
-        self.assertTrue(health["ollama"]["model_available"])
+        self.assertTrue(health["gemini"]["model_available"])
 
         frontend = self.client.get("/")
         self.assertEqual(frontend.status_code, 200)
         self.assertIn(b"/assets/", frontend.data)
         frontend.close()
+
+    def test_health_route_returns_real_gemini_model_status(self):
+        with patch(
+            "gemini_ai.urlopen",
+            return_value=FakeGeminiResponse(
+                {"supportedGenerationMethods": ["generateContent"]}
+            ),
+        ) as request:
+            response = self.client.get("/api/health")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["gemini"]["available"])
+        self.assertTrue(response.get_json()["gemini"]["model_available"])
+        self.assertEqual(
+            request.call_args.args[0].full_url,
+            f"https://generativelanguage.googleapis.com/v1beta/models/{DEFAULT_GEMINI_MODEL}",
+        )
+
+    def test_health_route_reports_gemini_connection_failure(self):
+        with patch(
+            "gemini_ai.urlopen",
+            side_effect=URLError("offline"),
+        ):
+            health = self.client.get("/api/health").get_json()["gemini"]
+
+        self.assertFalse(health["available"])
+        self.assertFalse(health["model_available"])
+        self.assertIn("Gemini", health["error"])
 
     def test_formats_endpoint_matches_upload_limits(self):
         formats = self.client.get("/api/formats").get_json()
@@ -117,7 +168,7 @@ class GuardianApiTests(unittest.TestCase):
         invalid = self.client.post("/api/chat", json={"country": "XX", "message": "Question"})
         self.assertEqual(invalid.status_code, 400)
 
-        with patch("app.answer_legal_question", side_effect=AssistantConfigurationError("Ollama mal configuré.")):
+        with patch("app.answer_legal_question", side_effect=AssistantConfigurationError("Gemini mal configuré.")):
             unconfigured = self.client.post(
                 "/api/chat", json={"country": "FR", "message": "Que dit le droit ?"}
             )
@@ -144,6 +195,27 @@ class GuardianApiTests(unittest.TestCase):
             "CA", [{"role": "user", "content": "Précédente"}], "Ma question"
         )
 
+    def test_chat_route_uses_gemini_generate_content_endpoint(self):
+        with patch(
+            "gemini_ai.urlopen",
+            return_value=FakeGeminiResponse(
+                {"candidates": [{"content": {"parts": [{"text": "Réponse Gemini"}]}}]}
+            ),
+        ) as request:
+            response = self.client.post(
+                "/api/chat",
+                json={"country": "FR", "message": "Réponds uniquement OK."},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["answer"], "Réponse Gemini")
+        self.assertEqual(
+            request.call_args.args[0].full_url,
+            f"https://generativelanguage.googleapis.com/v1beta/models/{DEFAULT_GEMINI_MODEL}:generateContent",
+        )
+        payload = json.loads(request.call_args.args[0].data.decode("utf-8"))
+        self.assertEqual(payload["contents"][-1]["parts"][0]["text"], "Réponds uniquement OK.")
+
     def test_chat_redacts_uploaded_document_before_sending_it_to_the_llm(self):
         with patch("app.answer_legal_question", return_value="Résumé du document") as answer:
             response = self.client.post(
@@ -167,8 +239,8 @@ class GuardianApiTests(unittest.TestCase):
         self.assertFalse(payload["document"]["protection"]["anonymized"])
         self.assertFalse(payload["document"]["protection"]["mapping_persisted"])
 
-    def test_protected_document_is_returned_when_ollama_is_unavailable(self):
-        with patch("app.answer_legal_question", side_effect=AssistantUnavailableError("Ollama est injoignable.")):
+    def test_protected_document_is_returned_when_gemini_is_unavailable(self):
+        with patch("app.answer_legal_question", side_effect=AssistantUnavailableError("Gemini est injoignable.")):
             response = self.client.post(
                 "/api/chat",
                 data={
@@ -186,7 +258,7 @@ class GuardianApiTests(unittest.TestCase):
         self.assertEqual(payload["document"]["output_filename"], "private-texte-masque.txt")
 
     def test_protected_payload_never_contains_original_values_or_mapping(self):
-        with patch("llm_assistant.local_chat", return_value="Analyse locale") as model:
+        with patch("llm_assistant.gemini_chat", return_value="Analyse Gemini") as model:
             response = self.client.post(
                 "/api/chat",
                 data={

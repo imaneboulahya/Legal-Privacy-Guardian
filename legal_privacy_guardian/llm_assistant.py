@@ -1,11 +1,11 @@
 import json
 
-from local_ai import (
-    LocalAIConfigurationError as AssistantConfigurationError,
-    LocalAIModelUnavailableError,
-    LocalAIProviderError as AssistantProviderError,
-    LocalAIUnavailableError as AssistantUnavailableError,
-    chat as local_chat,
+from gemini_ai import (
+    GeminiConfigurationError as AssistantConfigurationError,
+    GeminiModelUnavailableError,
+    GeminiProviderError as AssistantProviderError,
+    GeminiUnavailableError as AssistantUnavailableError,
+    chat as gemini_chat,
 )
 
 
@@ -58,7 +58,7 @@ def answer_legal_question(country_code, history, question, document_text=None):
         f"- {source['name']}: {source['url']}" for source in country["sources"]
     )
     system_prompt = (
-        "You are a local legal-information assistant, not a lawyer. Reply in the user's language. "
+        "You are a legal-information assistant, not a lawyer. Reply in the user's language. "
         f"The selected jurisdiction is {country['name']} ({country_code}); apply only its national "
         "law and note when an answer depends on a state, province, territory, or another country. "
         "Never invent statutes, article numbers, decisions, citations, or facts. The service does "
@@ -87,6 +87,6 @@ def answer_legal_question(country_code, history, question, document_text=None):
         {"role": "user", "content": user_content},
     ]
     try:
-        return local_chat(messages)
-    except LocalAIModelUnavailableError as error:
+        return gemini_chat(messages)
+    except GeminiModelUnavailableError as error:
         raise AssistantUnavailableError(str(error)) from error

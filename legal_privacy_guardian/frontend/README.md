@@ -1,14 +1,15 @@
 # Frontend React
 
-Interface React + Vite pour Legal Privacy Guardian. Le projet utilise du CSS natif, sans Bootstrap. En mode développement, Vite relaie `/api` vers Flask sur `127.0.0.1:5000`.
+Interface React + Vite pour Legal Privacy Guardian. Le projet utilise du CSS natif, sans Bootstrap. En mode développement, Vite relaie `/api` vers le serveur Python sur `127.0.0.1:5000`.
 
 Depuis deux terminaux PowerShell :
 
 ```powershell
-# Terminal 1, depuis legal_privacy_guardian
-py -m flask --app app run --debug
+# Terminal 1, depuis le dossier legal_privacy_guardian
+$env:GEMINI_API_KEY = "votre-cle-api"
+py app.py
 
-# Terminal 2
+# Terminal 2, depuis le dossier legal_privacy_guardian
 cd frontend
 npm.cmd install
 npm.cmd run dev

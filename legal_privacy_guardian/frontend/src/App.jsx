@@ -51,7 +51,7 @@ function countFindings(findings = {}) {
 function App() {
   const [scans, setScans] = useState([]);
   const [countries, setCountries] = useState({});
-  const [ollamaHealth, setOllamaHealth] = useState(null);
+  const [geminiHealth, setGeminiHealth] = useState(null);
   const [countryCode, setCountryCode] = useState(() => localStorage.getItem("guardian-country") || "");
   const [onboardingCountry, setOnboardingCountry] = useState(() => localStorage.getItem("guardian-country") || "");
   const [activePage, setActivePage] = useState("assistant");
@@ -85,9 +85,27 @@ function App() {
       .then((payload) => setCountries(payload.countries || {}))
       .catch(() => setChatNotice("Impossible de charger la liste des pays."));
     fetch("/api/health")
-      .then((response) => response.json())
-      .then((payload) => setOllamaHealth(payload.ollama || null))
-      .catch(() => setOllamaHealth({ available: false, model_available: false }));
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || `Erreur HTTP ${response.status}.`);
+        }
+        if (
+          !payload.gemini ||
+          typeof payload.gemini.available !== "boolean" ||
+          typeof payload.gemini.model_available !== "boolean"
+        ) {
+          throw new Error("La réponse de statut Gemini est invalide.");
+        }
+        setGeminiHealth(payload.gemini);
+      })
+      .catch((error) =>
+        setGeminiHealth({
+          available: false,
+          model_available: false,
+          error: error.message || "Impossible de vérifier l’état de Gemini.",
+        }),
+      );
     const updatePage = () => setActivePage("assistant");
     window.addEventListener("hashchange", updatePage);
     return () => window.removeEventListener("hashchange", updatePage);
@@ -330,7 +348,7 @@ function App() {
       <main className="main-panel" id={activePage}>
         <header className="topbar">
           <div className="breadcrumb"><span>{countries[countryCode]?.name || "Espace"}</span><span className="crumb-separator">/</span><strong>{activePage === "assistant" ? "Assistant juridique" : activePage === "documents" ? "Analyse de document" : "Vue d’ensemble"}</strong></div>
-          <div className="topbar-right"><span className="secure-label" title={ollamaHealth?.error || ""}><LockKeyhole size={14} />{ollamaHealth === null ? "Vérification Ollama…" : ollamaHealth.available && ollamaHealth.model_available ? "Ollama prêt · IA locale" : "Ollama indisponible"}</span><span className="avatar" title="Application locale"><Activity size={14} /></span></div>
+          <div className="topbar-right"><span className="secure-label" title={geminiHealth?.error || ""}><LockKeyhole size={14} />{geminiHealth === null ? "Vérification Gemini…" : geminiHealth.available && geminiHealth.model_available ? "Gemini prêt · API Google" : "Gemini indisponible"}</span><span className="avatar" title="Application locale"><Activity size={14} /></span></div>
         </header>
 
         <div className="page-content">
@@ -500,7 +518,7 @@ function App() {
                 <div className="chat-compose-footer"><span>{chatInput.length}/4 000 · Document pseudonymisé localement avant analyse</span><div className="chat-compose-actions"><button className="attach-button" type="button" onClick={() => chatDocumentRef.current?.click()} disabled={chatBusy}><Paperclip size={16} /><span>Joindre</span></button><button className="analyze-button" type="submit" disabled={!chatInput.trim() || chatBusy} aria-label="Envoyer la question">{chatBusy ? <LoaderCircle className="spin" size={17} /> : <Send size={16} />} Envoyer</button></div></div>
               </form>
             </div>
-            <aside className="assistant-disclosure"><p className="panel-kicker">PÉRIMÈTRE JURIDIQUE</p><h2>Droit de {countries[countryCode]?.name || ""}</h2><p>Les réponses sont produites localement par Ollama. Elles peuvent être inexactes ou incomplètes et ne remplacent pas un avis juridique.</p><div className="coverage-rule" /><strong>Portails officiels</strong>{(countries[countryCode]?.sources || []).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.name}<ArrowUpRight size={13} /></a>)}<p className="coverage-note"><AlertTriangle size={15} /><span>Le contenu des lois n’est pas récupéré en direct. Vérifiez les textes et leur version en vigueur sur les portails officiels.</span></p><p className="provider-warning"><LockKeyhole size={14} />Votre question et l’historique sont envoyés au modèle Ollama local. Seul le texte pseudonymisé du document lui est transmis.</p></aside>
+            <aside className="assistant-disclosure"><p className="panel-kicker">PÉRIMÈTRE JURIDIQUE</p><h2>Droit de {countries[countryCode]?.name || ""}</h2><p>Les réponses sont générées par Gemini via l’API Google. Elles peuvent être inexactes ou incomplètes et ne remplacent pas un avis juridique.</p><div className="coverage-rule" /><strong>Portails officiels</strong>{(countries[countryCode]?.sources || []).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.name}<ArrowUpRight size={13} /></a>)}<p className="coverage-note"><AlertTriangle size={15} /><span>Le contenu des lois n’est pas récupéré en direct. Vérifiez les textes et leur version en vigueur sur les portails officiels.</span></p><p className="provider-warning"><LockKeyhole size={14} />Votre question et l’historique sont transmis à Google. Le document joint est pseudonymisé localement avant transmission, mais cette protection n’est pas une anonymisation complète. La clé API reste sur le serveur.</p></aside>
           </section>}
 
           <footer className="page-footer"><span>LEGAL PRIVACY GUARDIAN</span><span>Prototype de démonstration <span className="footer-separator">·</span> Détection limitée</span></footer>
